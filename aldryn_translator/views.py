@@ -1,6 +1,7 @@
 import json
 import uuid
 from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.decorators import method_decorator
 
 from django.views.decorators.csrf import csrf_exempt
 from django.core.urlresolvers import reverse
@@ -15,11 +16,14 @@ from forms import AddTranslationForm, SelectPluginsByTypeForm
 from helpers import check_stage, log
 
 
-@staff_member_required
 class AddTranslationView(FormView):
     template_name = 'aldryn_translator/add_translation.html'
     form_class = AddTranslationForm
     trans_pk = ''
+
+    @method_decorator(staff_member_required)
+    def dispatch(self, *args, **kwargs):
+        return super(AddTranslationView, self).dispatch(*args, **kwargs)
 
     def get_success_url(self):
         return reverse('select_plugins_by_type', kwargs={'pk': self.trans_pk})
@@ -66,7 +70,7 @@ def select_plugins_by_type_view(request, pk):
             {'form': form}, context_instance=RequestContext(request)
         )
 
-
+@staff_member_required
 def select_plugins_by_id_view(request, pk):
     t = TranslationRequest.objects.get(pk=pk)
     check_stage(t.status, 'draft')
