@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% load i18n cms_tags standard_form %}
+
+{% block content %}
+	<h1>Please select your translations</h1>
+	<form action="" method="post" class="frm">
+	    {% csrf_token %}
+			<table>
+		    {% for g in groups %}
+		        {% for f in g.Items %}
+					<tr>
+		                <td><input type="checkbox" name="obj" value="{{ g.GroupId }}_{{ f.Id }}" checked /></td>
+						<td>{{ f.Content }}</td>
+					</tr>
+	            {% endfor %}
+		    {% endfor %}
+			<tr>
+				<td><input type="submit" /></td>
+			</tr>
+			</table>
+	</form>
+{% endblock content %}

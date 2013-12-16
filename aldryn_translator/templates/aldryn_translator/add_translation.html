@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% load i18n cms_tags standard_form %}
+
+{% block content %}
+	<h1>Add a new translation request</h1>
+	<form action="" method="post" class="frm">
+	    {% csrf_token %}
+	    <fieldset class="frm-horizontal">
+	        {% standard_form form %}
+	        {% standard_submit %}
+	    </fieldset>
+	</form>
+{% endblock content %}

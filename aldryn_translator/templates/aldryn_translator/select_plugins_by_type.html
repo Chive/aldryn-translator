@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+{% load i18n cms_tags standard_form %}
+
+{% block content %}
+	<h1>Please select the type of plugins which should be translated</h1>
+	<form method="post" action="">
+		{% csrf_token %}
+	    {% standard_form form %}
+	    {% standard_submit %}
+	</form>
+{% endblock content %}

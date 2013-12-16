@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% load i18n cms_tags %}
+
+{% block content %}
+	<h1>Your Quote</h1>
+	<form action="" method="post">
+	    {% csrf_token %}
+		{% for opt in res.Options %}
+			<h2>{{ opt.Name }}</h2>
+			<p>{{ opt.ShortDescription }}</p>
+			{{ opt.Description }}
+			<table>
+				<tr>
+					<th></th>
+					<th>Name</th>
+					<th>Delivery Date</th>
+					<th>Price</th>
+				</tr>
+			{% for d_opt in opt.DeliveryOptions %}
+				<tr>
+					<td><input type="radio" name="opt" value="{{ opt.OrderTypeId}}_{{ d_opt.DeliveryId }}"></td>
+					<td>{{ d_opt.Name }}</td>
+					<td>{{ d_opt.DeliveryDate }}</td>
+					<td>{{ res.Currency }} {{ d_opt.Price }}</td>
+				</tr>
+			{% endfor %}
+			</table>
+
+		{% endfor %}
+
+		<input type="submit" value="order" />
+	</form>
+{% endblock %}

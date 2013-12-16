@@ -1,0 +1,13 @@
+name: Aldryn Translator
+package-name: aldryn-translator
+url: https://github.com/Chive/aldryn-translator
+author:
+  name: Chive (Kim Thoenen)
+  url: http://chive.ch
+installed-apps:
+  - aldryn-translator
+version: 0.0.1
+description: Aldryn Translator
+license:
+  name: BSD
+  text: !literal-include LICENSE.txt

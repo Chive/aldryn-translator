@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n cms_tags standard_form %}
+
+{% block content %}
+	<h1>Confirmation</h1>
+	<table>
+		<tr>
+			<td>ID</td>
+			<td>{{ r.Id }}</td>
+		</tr>
+		<tr>
+			<td>Order Date</td>
+			<td>{{ r.OrderDate }}</td>
+		</tr>
+		<tr>
+			<td>Deadline</td>
+			<td>{{ r.Deadline }}</td>
+		</tr>
+		<tr>
+			<td>Price</td>
+			<td>{{ r.Currency }} {{ r.Price }}</td>
+		</tr>
+		<tr>
+			<td>Order Title</td>
+			<td>{{ r.OrderTitle }}</td>
+		</tr>
+		<tr>
+			<td>From Language</td>
+			<td>{{ r.SourceLang }}</td>
+		</tr>
+		<tr>
+			<td>To Language</td>
+			<td>{{ r.TargetLang }}</td>
+		</tr>
+		<tr>
+			<td>Status</td>
+			<td>{{ r.Status }}</td>
+		</tr>
+	</table>
+{% endblock content %}

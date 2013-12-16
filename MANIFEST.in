@@ -1,0 +1,5 @@
+include LICENSE.txt
+recursive-include aldryn_translator/templates *
+recursive-include aldryn_translator/locale *
+recursive-include aldryn_translator/migrations *
+recursive-exclude * *.pyc
