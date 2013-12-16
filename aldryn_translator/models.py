@@ -35,6 +35,7 @@ class TranslationRequest(models.Model):
     created_at = models.DateTimeField(verbose_name=_("Created at"), auto_now_add=True)
     from_lang = models.CharField(verbose_name=_("From Language"), max_length=50)
     to_lang = models.CharField(verbose_name=_("To Language"), max_length=50)
+    copy_content = models.BooleanField(verbose_name=_("Copy content from source to target language"), default=True)
     status = models.CharField(verbose_name=_("Status"), max_length=30, choices=STATUS_CHOICES,
                               default=STATUS_CHOICES[0][0])
     price = models.DecimalField(verbose_name=_("Preis"), decimal_places=2, max_digits=20, null=True, blank=True)

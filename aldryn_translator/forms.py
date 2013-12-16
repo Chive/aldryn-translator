@@ -12,7 +12,7 @@ class AddTranslationForm(forms.ModelForm):
         model = TranslationRequest
         fields = [
             # 'from_lang', 'to_lang', added dynamically in __init__()
-            'provider',
+            'provider', 'copy_content'
             # TODO: Add when stacks are enabled
             # 'all_pages', 'all_stacks',
         ]

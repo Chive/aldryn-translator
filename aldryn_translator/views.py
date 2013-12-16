@@ -33,6 +33,7 @@ class AddTranslationView(FormView):
         f.from_lang = form.cleaned_data['from_lang']
         f.to_lang = form.cleaned_data['to_lang']
         f.provider = form.cleaned_data['provider']
+        f.copy_content = form.cleaned_data['copy_content']
         # Always true atm (for ease of use)
         # f.all_pages = form.cleaned_data['all_pages']
         f.all_pages = True
@@ -119,7 +120,8 @@ def order_view(request, pk):
     t.order_name = "Aldryn Translator Order"
 
     # COPY OLD LANG PAGE TREE TO NEW ONE
-    copy_page(t.from_lang, t.to_lang)
+    if t.copy_content:
+        copy_page(t.from_lang, t.to_lang)
 
     data = prepare_data(t, t.from_lang, t.to_lang, plugin_source_lang=t.to_lang)
     data.update(prepare_order_data(request, t))
