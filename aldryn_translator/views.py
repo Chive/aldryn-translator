@@ -125,7 +125,7 @@ def order_view(request, pk):
     data.update(prepare_order_data(request, t))
     order = json.loads(get_order(t.provider, data))
 
-    log(data)
+    # DEBUG: log(data)
     t.sent_content = json.dumps(data)
     t.status = 'requested'
     t.save()

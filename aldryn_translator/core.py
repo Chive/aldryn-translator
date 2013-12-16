@@ -296,6 +296,7 @@ def insert_response(provider, response):
                 title = Title.objects.get(pk=obj['GroupId'])
                 for field in obj['Items']:
                     setattr(title, field['Id'], field['Content'])
+                title.save()
 
             else:
                 # Plugin objects
