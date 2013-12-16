@@ -1,8 +1,8 @@
 import json
 import uuid
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
-
 from django.views.decorators.csrf import csrf_exempt
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
@@ -26,7 +26,7 @@ class AddTranslationView(FormView):
         return super(AddTranslationView, self).dispatch(*args, **kwargs)
 
     def get_success_url(self):
-        return reverse('select_plugins_by_type', kwargs={'pk': self.trans_pk})
+        return reverse('admin:select_plugins_by_type', kwargs={'pk': self.trans_pk})
 
     def form_valid(self, form):
         f = form.save(commit=False)
@@ -63,7 +63,7 @@ def select_plugins_by_type_view(request, pk):
             t.order_selection = form.cleaned_data['plugins']
             t.status = 'selected_content'
             t.save()
-            return redirect(reverse('get_quote', kwargs={'pk': t.pk}))
+            return redirect(reverse('admin:get_quote', kwargs={'pk': t.pk}))
     else:
         return render_to_response(
             'aldryn_translator/select_plugins_by_type.html',
@@ -96,7 +96,7 @@ def get_quote_view(request, pk):
             t.order_choice = request.POST.get('opt')  # TODO: possible security issue?
             t.status = 'selected_quote'
             t.save()
-            return HttpResponseRedirect(reverse('order', kwargs={'pk': pk}))
+            return HttpResponseRedirect(reverse('admin:order', kwargs={'pk': pk}))
 
     else:
         quote = get_quote(t.provider, data=prepare_data(t, t.from_lang, t.to_lang))
@@ -128,13 +128,10 @@ def order_view(request, pk):
     log(data)
     t.sent_content = json.dumps(data)
     t.status = 'requested'
-
-    # TODO: save other stuff from response to model
-    # - Deadline
-    # - price
-    # - more?
-
     t.save()
+
+    # TODO: save other stuff from response to model (deadline, price, more?)
+
     if t.provider == 'supertext':
         return render_to_response(
             'aldryn_translator/confirmation.html', {'r': order},

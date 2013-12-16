@@ -64,7 +64,6 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
         instance = plugin.get_plugin_instance()[0]
         if instance is not None:
             if plugin_selection and str(type(instance)) not in plugin_selection:
-                print("%s not in" % (str(type(instance))))
                 continue
 
             if getattr(instance, "language") == from_lang:  # FIXME: could this break at some point?
@@ -103,7 +102,7 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
                     try:
                         plugin = CMSPlugin.objects.get(pk=m[2]).get_plugin_instance()[0]
                     except CMSPlugin.DoesNotExist:
-                        print("Could not find plugin with pk %s" % str(m[0]))
+                        sys.stderr.write("Could not find plugin with pk %s" % str(m[0]))
 
                     if plugin.mailto:
                         href = plugin.mailto
@@ -115,8 +114,26 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
                     text = '<a plugin="%s" href="%s" target="%s" alt="%s" title="%s" img_src="%s">%s</a>' % (
                         m[2], href, plugin.target, m[1], m[4], m[3], plugin.name)
                     plugin_data[i]['fields'][key] = value.replace(m[0], text)
-
     return plugin_data
+
+
+def export_page_titles(lang):
+    title_data = []
+    for page in Page.objects.all():
+        try:
+            title = page.title_set.filter(language=lang, page__publisher_is_draft=True)[0]
+            title_data.append({
+                'fields': {
+                    'title': title.title,
+                    'menu_title': title.menu_title,
+                    'page_title': title.page_title
+                },
+                'title_pk': title.pk,
+            })
+
+        except IndexError:
+            pass
+    return title_data
 
 
 def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
@@ -138,6 +155,8 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
     # TODO: Enable again when stacks are working
     # if obj.all_stacks:
     #     raw_data += export_plugins_by_stacks(source)
+
+    raw_data += export_page_titles(source)
 
     if not raw_data:
         raise UserWarning("No content could be found.")
@@ -170,8 +189,14 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
 
         for item in raw_data:
             group = dict()
-            group['GroupId'] = item['plugin_pk']
-            group['Context'] = item['plugin_type']
+            if 'plugin_pk' in item:
+                group['GroupId'] = item['plugin_pk']
+                group['Context'] = item['plugin_type']
+
+            elif 'title_pk' in item:
+                group['GroupId'] = item['title_pk']
+                group['Context'] = '_pagetitle'
+
             group['Items'] = list()
 
             for name, val in item['fields'].items():
@@ -195,7 +220,7 @@ def prepare_order_data(request, obj):
         res['ReferenceData'] = obj.reference
         res['OrderName'] = obj.order_name
         res['OrderTypeId'], res['DeliveryId'] = obj.order_choice.split("_")
-        res['CallbackUrl'] = request.build_absolute_uri(reverse('process_response'))
+        res['CallbackUrl'] = request.build_absolute_uri(reverse('admin:process_response'))
 
     else:
         raise NotImplementedError()
@@ -265,32 +290,40 @@ def copy_page(from_lang, to_lang):
 
 def insert_response(provider, response):
     if provider == 'supertext':
-        for plugin in response['Groups']:
-            plugin_class = CMSPlugin.objects.get(pk=plugin['GroupId'])
-            instance = plugin_class.get_plugin_instance()[0]
-            for field in plugin['Items']:
-                f_content = field['Content']
-                f_id = field['Id']
-                # Check for 'serialized' link plugin
-                exp = r'(<a plugin="([\d]*)" href="[^"]*" target="[^"]*" alt="([^"]*)" title="([^"]*)" img_src="([^"]*)">(.*[^</a>])</a>)'
-                matches = re.findall(exp, field['Content'])
-                if matches:
-                    for m in matches:
-                        try:
-                            linkplugin = CMSPlugin.objects.get(pk=m[1]).get_plugin_instance()[0]
-                        except CMSPlugin.DoesNotExist:
-                            print("Could not find plugin with pk %s" % str(m[0]))
+        for obj in response['Groups']:
+            if obj['Context'] == '_pagetitle':
+                # Page Title objects
+                title = Title.objects.get(pk=obj['GroupId'])
+                for field in obj['Items']:
+                    setattr(title, field['Id'], field['Content'])
 
-                        # Save changes to linkplugin
-                        linkplugin.name = m[5]
-                        linkplugin.save()
+            else:
+                # Plugin objects
+                plugin_class = CMSPlugin.objects.get(pk=obj['GroupId'])
+                instance = plugin_class.get_plugin_instance()[0]
+                for field in obj['Items']:
+                    f_content = field['Content']
+                    f_id = field['Id']
+                    # Check for 'serialized' link plugin
+                    exp = r'(<a plugin="([\d]*)" href="[^"]*" target="[^"]*" alt="([^"]*)" title="([^"]*)" img_src="([^"]*)">(.*[^</a>])</a>)'
+                    matches = re.findall(exp, field['Content'])
+                    if matches:
+                        for m in matches:
+                            try:
+                                linkplugin = CMSPlugin.objects.get(pk=m[1]).get_plugin_instance()[0]
+                            except CMSPlugin.DoesNotExist:
+                                sys.stderr.write("Could not find plugin with pk %s" % str(m[0]))
 
-                        # Save changes to parent text plugin
-                        text = '<img alt="%s" id="plugin_obj_%s" src="%s" title="%s">' % (m[2], m[1], m[4], m[3])
-                        f_content = f_content.replace(m[0], text)
+                            # Save changes to linkplugin
+                            linkplugin.name = m[5]
+                            linkplugin.save()
 
-                setattr(instance, f_id, f_content)
+                            # Save changes to parent text plugin
+                            text = '<img alt="%s" id="plugin_obj_%s" src="%s" title="%s">' % (m[2], m[1], m[4], m[3])
+                            f_content = f_content.replace(m[0], text)
 
-            instance.save()
+                    setattr(instance, f_id, f_content)
+
+                instance.save()
     else:
         raise NotImplementedError()
