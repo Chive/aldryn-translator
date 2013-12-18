@@ -16,7 +16,7 @@ from cms.api import copy_plugins_to_language
 from cms.stacks.models import Stack
 from cms.utils.copy_plugins import copy_plugins_to
 
-from helpers import get_creds
+from helpers import get_creds, is_dev
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
@@ -227,7 +227,10 @@ def prepare_order_data(request, obj):
 
 def get_quote(provider, data):
     if provider == 'supertext':
-        url = 'http://dev.supertext.ch/api/v1/translation/quote'
+        if is_dev():
+            url = 'http://dev.supertext.ch/api/v1/translation/quote'
+        else:
+            url = 'http://supertext.ch/api/v1/translation/quote'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data), headers=headers)
         return r.content
@@ -239,8 +242,10 @@ def get_quote(provider, data):
 def get_order(provider, data):
     if provider == 'supertext':
         user, api_key = get_creds('SUPERTEXT', ['USER', 'API_KEY'])
-
-        url = 'http://dev.supertext.ch/api/v1/translation/order'
+        if is_dev():
+            url = 'http://dev.supertext.ch/api/v1/translation/order'
+        else:
+            url = 'http://supertext.ch/api/v1/translation/order'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data), headers=headers, auth=(user, api_key))
         return r.content

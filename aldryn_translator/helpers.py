@@ -56,3 +56,7 @@ def get_creds(provider, fields):
         raise ImproperlyConfigured("Please provide the provide credentials to use %s's api" % provider.title())
 
     return return_list
+
+
+def is_dev():
+    return getattr(settings, "ALDRYN_TRANSLATOR_DEV", False)
