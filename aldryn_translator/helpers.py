@@ -25,8 +25,8 @@ def get_site_languages():
     return get_language_objects(Site.objects.get_current().pk)
 
 
-def log(data):
-    with open('log.txt', 'w') as f:
+def log_to_file(data, filename='aldryn_translator_log.txt'):
+    with open(filename, 'w') as f:
         f.write(json.dumps(data))
 
 

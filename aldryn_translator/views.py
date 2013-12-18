@@ -13,7 +13,7 @@ from django.views.generic import FormView
 from core import get_quote, get_order, copy_page, insert_response, prepare_data, prepare_order_data
 from models import TranslationRequest, TranslationResponse
 from forms import AddTranslationForm, SelectPluginsByTypeForm
-from helpers import check_stage, log
+from helpers import check_stage, log, is_dev
 
 
 class AddTranslationView(FormView):
@@ -124,8 +124,9 @@ def order_view(request, pk):
     data.update(prepare_order_data(request, t))
     order = json.loads(get_order(t.provider, data))
 
-    # TODO: Remove debug statement
-    # log(data)
+    if is_dev():
+        log(data)
+
     t.sent_content = json.dumps(data)
     t.status = 'requested'
     t.save()
