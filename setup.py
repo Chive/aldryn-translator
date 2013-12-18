@@ -18,7 +18,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name='aldryn translator',
+    name='aldryn-translator',
     version=__version__,
     description='Aldryn Translator',
     author='Chive (Kim Thoenen)',

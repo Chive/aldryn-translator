@@ -2,3 +2,5 @@
 .idea
 env
 *.egg-info
+dist
+build
