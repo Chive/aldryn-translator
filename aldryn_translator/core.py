@@ -1,19 +1,20 @@
 import json
 import re
 import sys
+from __builtin__ import unicode
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db import models
+from djangocms_text_ckeditor.models import Text
 import requests
 
 from cms.models import Placeholder
-from djangocms_text_ckeditor.models import Text
-from __builtin__ import unicode
 from cms.utils.i18n import get_language_list
 from cms.models import Title, Page, CMSPlugin
 from cms.api import copy_plugins_to_language
 from cms.stacks.models import Stack
+from cms.utils.copy_plugins import copy_plugins_to
 
 from helpers import get_creds
 
@@ -29,9 +30,6 @@ def export_plugins_by_pages(from_lang, plugin_selection=None):
 
 
 def export_plugins_by_stacks(from_lang):
-    # TODO: Not working as it should yet
-    # TODO: We have to fix cms/managment/lang-copy too
-    raise NotImplementedError()
     plugins = []
     for stack in Stack.objects.all():
         try:
@@ -152,9 +150,8 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
     if obj.all_pages:
         raw_data += export_plugins_by_pages(source, obj.order_selection)
 
-    # TODO: Enable again when stacks are working
-    # if obj.all_stacks:
-    #     raw_data += export_plugins_by_stacks(source)
+    if obj.all_stacks:
+        raw_data += export_plugins_by_stacks(source)
 
     raw_data += export_page_titles(source)
 
@@ -268,24 +265,35 @@ def copy_page(from_lang, to_lang):
         raise Exception("Could not languages from site")
 
     for page in Page.objects.on_site(site).drafts():
-            # copy title
-            if from_lang in page.get_languages():
-                try:
-                    title = page.get_title_obj(to_lang, fallback=False)
-                except Title.DoesNotExist:
-                    title = page.get_title_obj(from_lang)
-                    if verbose:
-                        sys.stdout.write('copying title %s from language %s\n' % (title.title, from_lang))
-                    title.id = None
-                    title.language = to_lang
-                    title.save()
-                # copy plugins using API
+        # copy title
+        if from_lang in page.get_languages():
+            try:
+                title = page.get_title_obj(to_lang, fallback=False)
+            except Title.DoesNotExist:
+                title = page.get_title_obj(from_lang)
                 if verbose:
-                    sys.stdout.write('copying plugins for %s from %s\n' % (page.get_page_title(from_lang), from_lang))
-                copy_plugins_to_language(page, from_lang, to_lang)
-            else:
-                if verbose:
-                    sys.stdout.write('Skipping page %s, language %s not defined\n' % (page, from_lang))
+                    sys.stdout.write('copying title %s from language %s\n' % (title.title, from_lang))
+                title.id = None
+                title.language = to_lang
+                title.save()
+            # copy plugins using API
+            if verbose:
+                sys.stdout.write('copying plugins for %s from %s\n' % (page.get_page_title(from_lang), from_lang))
+            copy_plugins_to_language(page, from_lang, to_lang)
+        else:
+            if verbose:
+                sys.stdout.write('Skipping page %s, language %s not defined\n' % (page, from_lang))
+
+    for stack in Stack.objects.all():
+        plugin_list = []
+        for plugin in stack.draft.get_plugins():
+            if plugin.language == from_lang:
+                plugin_list.append(plugin)
+
+        if plugin_list:
+            if verbose:
+                sys.stdout.write("copying plugins from stack '%s' in '%s' to '%s'\n" % (stack.name, from_lang, to_lang))
+            copy_plugins_to(plugin_list, stack.draft, to_lang)
 
 
 def insert_response(provider, response):

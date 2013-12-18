@@ -34,11 +34,8 @@ class AddTranslationView(FormView):
         f.to_lang = form.cleaned_data['to_lang']
         f.provider = form.cleaned_data['provider']
         f.copy_content = form.cleaned_data['copy_content']
-        # Always true atm (for ease of use)
-        # f.all_pages = form.cleaned_data['all_pages']
-        f.all_pages = True
-        # Not Active yet
-        # f.all_stacks = form.cleaned_data['all_stacks']
+        f.all_pages = form.cleaned_data['all_pages']
+        f.all_stacks = form.cleaned_data['all_stacks']
         f.save()
 
         self.trans_pk = f.pk
@@ -127,7 +124,8 @@ def order_view(request, pk):
     data.update(prepare_order_data(request, t))
     order = json.loads(get_order(t.provider, data))
 
-    # DEBUG: log(data)
+    # TODO: Remove debug statement
+    # log(data)
     t.sent_content = json.dumps(data)
     t.status = 'requested'
     t.save()
