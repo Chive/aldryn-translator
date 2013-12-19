@@ -20,6 +20,7 @@
 				<tr>
 					<td><input type="radio" name="opt" value="{{ opt.OrderTypeId}}_{{ d_opt.DeliveryId }}"></td>
 					<td>{{ d_opt.Name }}</td>
+					{% comment %} <td>{{ d_opt.DeliveryDate|date:"D d M Y" }} {{ d_opt.DeliveryDate|time:"H:i" }}</td> {% endcomment %}
 					<td>{{ d_opt.DeliveryDate }}</td>
 					<td>{{ res.Currency }} {{ d_opt.Price }}</td>
 				</tr>

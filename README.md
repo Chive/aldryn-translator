@@ -25,4 +25,5 @@ ALDRYN_TRANSLATOR_CREDENTIALS = {
 }
 
 ALDRYN_TRANSLATOR_DEV = True/False
+ALDRYN_TRANSLATOR_FIELDS_BLACKLIST = ['reverse_id', 'additional_classes', 'custom_classes', 'width', 'height']
 ```

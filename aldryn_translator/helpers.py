@@ -27,11 +27,11 @@ def get_site_languages():
 
 def log_to_file(data, filename='aldryn_translator_log.txt'):
     with open(filename, 'w') as f:
-        f.write(json.dumps(data))
+        f.write(json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'))
 
 
 def display_data_to_web(data):
-    c = json.dumps(data, indent=4, sort_keys=True)
+    c = json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True).encode('ascii', 'xmlcharrefreplace')
     return HttpResponse("<pre>%s</pre>" % escape(c))
 
 
@@ -60,3 +60,7 @@ def get_creds(provider, fields):
 
 def is_dev():
     return getattr(settings, "ALDRYN_TRANSLATOR_DEV", False)
+
+
+def get_blacklist():
+    return getattr(settings, "ALDRYN_TRANSLATOR_FIELDS_BLACKLIST", list())

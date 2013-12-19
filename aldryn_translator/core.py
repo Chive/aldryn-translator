@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import re
 import sys
@@ -16,7 +17,7 @@ from cms.api import copy_plugins_to_language
 from cms.stacks.models import Stack
 from cms.utils.copy_plugins import copy_plugins_to
 
-from helpers import get_creds, is_dev
+from helpers import get_creds, is_dev, get_blacklist
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
@@ -29,7 +30,7 @@ def export_plugins_by_pages(from_lang, plugin_selection=None):
     return export_plugins(from_lang, plugins, plugin_selection)
 
 
-def export_plugins_by_stacks(from_lang):
+def export_plugins_by_stacks(from_lang, plugin_selection=None):
     plugins = []
     for stack in Stack.objects.all():
         try:
@@ -43,7 +44,7 @@ def export_plugins_by_stacks(from_lang):
             for plugin in getattr(stack, field).get_plugins():
                 plugins.append(plugin)
 
-    return export_plugins(from_lang, plugins)
+    return export_plugins(from_lang, plugins, plugin_selection)
 
 
 # Not used atm
@@ -57,6 +58,7 @@ def export_plugins_by_placeholders(from_lang):
 
 
 def export_plugins(from_lang, plugin_list, plugin_selection=None):
+    blacklist = get_blacklist()
     plugins = []
     for plugin in plugin_list:
         instance = plugin.get_plugin_instance()[0]
@@ -74,7 +76,6 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
             if ((isinstance(field, models.CharField) or isinstance(field, models.TextField))
                     and not field.choices and field.editable and field):
                 plugin_fields.append(field)
-
         if plugin_fields:
             d = dict()
             d['plugin_pk'] = getattr(plugin, "pk")
@@ -82,7 +83,7 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
             d['fields'] = dict()
             for field in plugin_fields:
                 val = getattr(plugin, field.name)
-                if val not in ['', None]:
+                if val not in ['', None] and field.name not in blacklist:
                     d['fields'][field.name] = val
 
             if d['fields']:
@@ -98,25 +99,30 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
             if matches:
                 for m in matches:
                     try:
-                        plugin = CMSPlugin.objects.get(pk=m[2]).get_plugin_instance()[0]
+                        link_plugin = CMSPlugin.objects.get(pk=m[2]).get_plugin_instance()[0]
                     except CMSPlugin.DoesNotExist:
-                        sys.stderr.write("Could not find plugin with pk %s" % str(m[0]))
+                        sys.stderr.write("ERROR: Could not find plugin with pk %s!\n" % str(m[2]))
+                        continue
 
-                    if plugin.mailto:
-                        href = plugin.mailto
-                    elif plugin.page_link:
-                        href = plugin.page_link
+                    if getattr(link_plugin, 'mailto', False):
+                        href = link_plugin.mailto
+                    elif getattr(link_plugin, 'page_link', False):
+                        href = link_plugin.page_link
                     else:
-                        href = plugin.url
+                        href = link_plugin.url
 
                     text = '<a plugin="%s" href="%s" target="%s" alt="%s" title="%s" img_src="%s">%s</a>' % (
-                        m[2], href, plugin.target, m[1], m[4], m[3], plugin.name)
+                        m[2], href, link_plugin.target, m[1], m[4], m[3], link_plugin.name)
                     plugin_data[i]['fields'][key] = value.replace(m[0], text)
+
     return plugin_data
 
 
-def export_page_titles(lang):
+def export_page_titles(lang, plugin_selection=None):
     title_data = []
+    if plugin_selection and '_pagetitle' not in plugin_selection:
+        return title_data
+
     for page in Page.objects.all():
         try:
             title = page.title_set.filter(language=lang, page__publisher_is_draft=True)[0]
@@ -151,9 +157,9 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
         raw_data += export_plugins_by_pages(source, obj.order_selection)
 
     if obj.all_stacks:
-        raw_data += export_plugins_by_stacks(source)
+        raw_data += export_plugins_by_stacks(source, obj.order_selection)
 
-    raw_data += export_page_titles(source)
+    raw_data += export_page_titles(source, obj.order_selection)
 
     if not raw_data:
         raise UserWarning("No content could be found.")
@@ -232,7 +238,8 @@ def get_quote(provider, data):
         else:
             url = 'http://supertext.ch/api/v1/translation/quote'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
-        r = requests.post(url, data=json.dumps(data), headers=headers)
+        r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
+                          headers=headers)
         return r.content
 
     else:
@@ -247,7 +254,8 @@ def get_order(provider, data):
         else:
             url = 'http://supertext.ch/api/v1/translation/order'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
-        r = requests.post(url, data=json.dumps(data), headers=headers, auth=(user, api_key))
+        r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
+                          headers=headers, auth=(user, api_key))
         return r.content
 
     else:
@@ -257,7 +265,6 @@ def get_order(provider, data):
 # copied from cms > management
 def copy_page(from_lang, to_lang):
     site = settings.SITE_ID
-    verbose = True
 
     #test both langs
     if from_lang == to_lang:
@@ -276,18 +283,11 @@ def copy_page(from_lang, to_lang):
                 title = page.get_title_obj(to_lang, fallback=False)
             except Title.DoesNotExist:
                 title = page.get_title_obj(from_lang)
-                if verbose:
-                    sys.stdout.write('copying title %s from language %s\n' % (title.title, from_lang))
                 title.id = None
                 title.language = to_lang
                 title.save()
             # copy plugins using API
-            if verbose:
-                sys.stdout.write('copying plugins for %s from %s\n' % (page.get_page_title(from_lang), from_lang))
             copy_plugins_to_language(page, from_lang, to_lang)
-        else:
-            if verbose:
-                sys.stdout.write('Skipping page %s, language %s not defined\n' % (page, from_lang))
 
     for stack in Stack.objects.all():
         plugin_list = []
@@ -296,8 +296,6 @@ def copy_page(from_lang, to_lang):
                 plugin_list.append(plugin)
 
         if plugin_list:
-            if verbose:
-                sys.stdout.write("copying plugins from stack '%s' in '%s' to '%s'\n" % (stack.name, from_lang, to_lang))
             copy_plugins_to(plugin_list, stack.draft, to_lang)
 
 
@@ -326,7 +324,7 @@ def insert_response(provider, response):
                             try:
                                 linkplugin = CMSPlugin.objects.get(pk=m[1]).get_plugin_instance()[0]
                             except CMSPlugin.DoesNotExist:
-                                sys.stderr.write("Could not find plugin with pk %s" % str(m[0]))
+                                sys.stderr.write("ERROR: Could not find plugin with pk %s\n" % str(m[0]))
 
                             # Save changes to linkplugin
                             linkplugin.name = m[5]

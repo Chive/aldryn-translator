@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import uuid
 
@@ -98,7 +99,8 @@ def get_quote_view(request, pk):
 
     else:
         quote = get_quote(t.provider, data=prepare_data(t, t.from_lang, t.to_lang))
-
+        if is_dev():
+            log_to_file(prepare_data(t, t.from_lang, t.to_lang))
         if t.provider == 'supertext':
             res = json.loads(quote)
             return render_to_response(
@@ -127,7 +129,7 @@ def order_view(request, pk):
     if is_dev():
         log_to_file(data)
 
-    t.sent_content = json.dumps(data)
+    t.sent_content = json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace')
     t.status = 'requested'
     t.save()
 
