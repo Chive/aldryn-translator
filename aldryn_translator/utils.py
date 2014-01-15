@@ -1,6 +1,8 @@
 import inspect
 import json
 import sys
+import time
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -31,8 +33,9 @@ def log_to_file(data, filename='aldryn_translator_log.txt'):
 
 
 def display_data_to_web(data):
-    c = json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True).encode('ascii', 'xmlcharrefreplace')
-    return HttpResponse("<pre>%s</pre>" % escape(c))
+    return HttpResponse("<pre>%s</pre>" % escape(
+        json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True).encode('ascii', 'xmlcharrefreplace'))
+    )
 
 
 def check_stage(requested, expected):

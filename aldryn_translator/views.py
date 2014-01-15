@@ -14,7 +14,7 @@ from django.views.generic import FormView
 from core import get_quote, get_order, copy_page, insert_response, prepare_data, prepare_order_data
 from models import TranslationRequest, TranslationResponse
 from forms import AddTranslationForm, SelectPluginsByTypeForm
-from helpers import check_stage, is_dev, log_to_file
+from utils import check_stage, is_dev, log_to_file
 
 
 class AddTranslationView(FormView):

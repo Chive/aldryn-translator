@@ -3,7 +3,7 @@ from django import forms
 from django.forms import Select
 from django.utils.translation import ugettext_lazy as _
 
-from helpers import get_site_languages
+from utils import get_site_languages
 from models import TranslationRequest
 
 

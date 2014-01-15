@@ -17,7 +17,7 @@ from cms.api import copy_plugins_to_language
 from cms.stacks.models import Stack
 from cms.utils.copy_plugins import copy_plugins_to
 
-from helpers import get_creds, is_dev, get_blacklist
+from utils import get_creds, is_dev, get_blacklist, log_to_file
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
