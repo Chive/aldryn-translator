@@ -49,11 +49,15 @@ def select_plugins_by_type_view(request, pk):
     check_stage(t.status, 'draft')
 
     data = prepare_data(t, t.from_lang, t.to_lang)
-    plugins = dict()
+    plugins = {}
     for p in data['Groups']:
-        if p['Context'] not in plugins:
-            plugins[p['Context']] = 0
-        plugins[p['Context']] += 1
+        if p['Context'] == '_pagetitle':
+            context = "Page Titles"
+        else:
+            context = p['Context']
+        if context not in plugins:
+            plugins[context] = 0
+        plugins[context] += 1
 
     form = SelectPluginsByTypeForm(request.POST or None, plugins=plugins)
 
@@ -98,9 +102,10 @@ def get_quote_view(request, pk):
             return HttpResponseRedirect(reverse('admin:order', kwargs={'pk': pk}))
 
     else:
-        quote = get_quote(t.provider, data=prepare_data(t, t.from_lang, t.to_lang))
+        data = prepare_data(t, t.from_lang, t.to_lang)
+        quote = get_quote(t.provider, data=data)
         if is_dev():
-            log_to_file(prepare_data(t, t.from_lang, t.to_lang))
+            log_to_file(data)
         if t.provider == 'supertext':
             res = json.loads(quote)
             return render_to_response(

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-import re
-import sys
 from __builtin__ import unicode
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db import models
 from djangocms_text_ckeditor.models import Text
 import requests
 
@@ -17,7 +14,7 @@ from cms.api import copy_plugins_to_language
 from cms.stacks.models import Stack
 from cms.utils.copy_plugins import copy_plugins_to
 
-from utils import get_creds, is_dev, get_blacklist, log_to_file
+from utils import get_creds, is_dev, log_to_file
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
@@ -58,62 +55,41 @@ def export_plugins_by_placeholders(from_lang):
 
 
 def export_plugins(from_lang, plugin_list, plugin_selection=None):
-    blacklist = get_blacklist()
-    plugins = []
+    plugin_data = []
     for plugin in plugin_list:
-        instance = plugin.get_plugin_instance()[0]
-        if instance is not None:
-            if plugin_selection and str(type(instance)) not in plugin_selection:
-                continue
+        try:
+            instance = plugin.get_plugin_instance()[0]
+        except KeyError as e:
+            # Nasty fix for StackPlugins still straying around
+            if str(e) != "u'StackPlugin'":
+                raise KeyError(str(e))
+            continue
 
-            if getattr(instance, "language") == from_lang:  # FIXME: could this break at some point?
-                plugins.append(instance)
+        if instance is None:
+            continue
+        elif plugin_selection and str(type(instance)) not in plugin_selection:
+            continue
 
-    plugin_data = list()
-    for plugin in plugins:
-        plugin_fields = []
-        for field in plugin._meta.fields:
-            if ((isinstance(field, models.CharField) or isinstance(field, models.TextField))
-                    and not field.choices and field.editable and field):
-                plugin_fields.append(field)
-        if plugin_fields:
-            d = dict()
-            d['plugin_pk'] = getattr(plugin, "pk")
-            d['plugin_type'] = str(type(plugin))
-            d['fields'] = dict()
-            for field in plugin_fields:
-                val = getattr(plugin, field.name)
-                if val not in ['', None] and field.name not in blacklist:
-                    d['fields'][field.name] = val
+        if getattr(instance, "language") == from_lang:  # TODO: check: could this break at some point?
+            plugin_contents = plugin.get_plugin_instance()[0].get_translatable_content()
+            if plugin_contents:
+                if not isinstance(plugin_contents, list):
+                    plugin_contents = [plugin_contents]
 
-            if d['fields']:
-                plugin_data.append(d)
+                for item in plugin_contents:
+                    plugin_dict = {
+                        'plugin_pk': getattr(plugin, "pk"),
+                        'plugin_type': "%s%s" % (instance.__class__.__name__,  " (%s)" % str(type(instance)) or ""),
+                        'fields': {}
+                    }
 
-    # POST PROCESSING: Merging Link plugins into Text Plugins
-    for i, plugin in enumerate(plugin_data):
-        for key, value in plugin['fields'].items():
-            matches = re.findall(
-                r'(<img alt="(Link[^"]*)" id="plugin_obj_([\d]*)" src="([^"]*)" title="(Link[^"]*)">)',
-                value
-            )
-            if matches:
-                for m in matches:
-                    try:
-                        link_plugin = CMSPlugin.objects.get(pk=m[2]).get_plugin_instance()[0]
-                    except CMSPlugin.DoesNotExist:
-                        sys.stderr.write("ERROR: Could not find plugin with pk %s!\n" % str(m[2]))
-                        continue
+                    for key, value in item.items():
+                        plugin_dict['fields'][key] = value
 
-                    if getattr(link_plugin, 'mailto', False):
-                        href = link_plugin.mailto
-                    elif getattr(link_plugin, 'page_link', False):
-                        href = link_plugin.page_link
-                    else:
-                        href = link_plugin.url
+                    plugin_data.append(plugin_dict)
 
-                    text = '<a plugin="%s" href="%s" target="%s" alt="%s" title="%s" img_src="%s">%s</a>' % (
-                        m[2], href, link_plugin.target, m[1], m[4], m[3], link_plugin.name)
-                    plugin_data[i]['fields'][key] = value.replace(m[0], text)
+    if is_dev():
+        log_to_file(plugin_data)
 
     return plugin_data
 
@@ -311,31 +287,8 @@ def insert_response(provider, response):
 
             else:
                 # Plugin objects
-                plugin_class = CMSPlugin.objects.get(pk=obj['GroupId'])
-                instance = plugin_class.get_plugin_instance()[0]
-                for field in obj['Items']:
-                    f_content = field['Content']
-                    f_id = field['Id']
-                    # Check for 'serialized' link plugin
-                    exp = r'(<a plugin="([\d]*)" href="[^"]*" target="[^"]*" alt="([^"]*)" title="([^"]*)" img_src="([^"]*)">(.*[^</a>])</a>)'
-                    matches = re.findall(exp, field['Content'])
-                    if matches:
-                        for m in matches:
-                            try:
-                                linkplugin = CMSPlugin.objects.get(pk=m[1]).get_plugin_instance()[0]
-                            except CMSPlugin.DoesNotExist:
-                                sys.stderr.write("ERROR: Could not find plugin with pk %s\n" % str(m[0]))
-
-                            # Save changes to linkplugin
-                            linkplugin.name = m[5]
-                            linkplugin.save()
-
-                            # Save changes to parent text plugin
-                            text = '<img alt="%s" id="plugin_obj_%s" src="%s" title="%s">' % (m[2], m[1], m[4], m[3])
-                            f_content = f_content.replace(m[0], text)
-
-                    setattr(instance, f_id, f_content)
-
+                instance = CMSPlugin.objects.get(pk=obj['GroupId']).get_plugin_instance()[0]
+                instance.set_translatable_content(obj['Items'])
                 instance.save()
     else:
         raise NotImplementedError()
