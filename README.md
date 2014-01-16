@@ -1,11 +1,11 @@
-aldryn translator
+aldryn-translator
 =================
 
 Setup
 -----
 
 ```bash
-pip install aldryn-translator  # from pkg.divio.ch
+pip install aldryn-translator
 ```
 
 
