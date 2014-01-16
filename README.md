@@ -1,11 +1,13 @@
 aldryn-translator
 =================
 
+This is work in progress. Try at your own risk
+
 Setup
 -----
 
 ```bash
-pip install aldryn-translator
+pip install -e git+https://github.com/Chive/aldryn-translator#egg=aldryn-translator
 ```
 
 
