@@ -6,7 +6,7 @@ author:
   url: http://chive.ch
 installed-apps:
   - aldryn-translator
-version: 0.0.4
+version: 0.0.5
 description: Aldryn Translator
 license:
   name: BSD
