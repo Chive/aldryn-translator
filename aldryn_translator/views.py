@@ -14,7 +14,7 @@ from django.views.generic import FormView
 from core import get_quote, get_order, copy_page, insert_response, prepare_data, prepare_order_data
 from models import TranslationRequest, TranslationResponse
 from forms import AddTranslationForm, SelectPluginsByTypeForm
-from utils import check_stage, is_dev, log_to_file
+from utils import check_stage, is_dev, log_to_file, log_to_file_enabled
 
 
 class AddTranslationView(FormView):
@@ -104,7 +104,7 @@ def get_quote_view(request, pk):
     else:
         data = prepare_data(t, t.from_lang, t.to_lang)
         quote = get_quote(t.provider, data=data)
-        if is_dev():
+        if log_to_file_enabled():
             log_to_file(data)
         if t.provider == 'supertext':
             res = json.loads(quote)
@@ -131,7 +131,7 @@ def order_view(request, pk):
     data.update(prepare_order_data(request, t))
     order = json.loads(get_order(t.provider, data))
 
-    if is_dev():
+    if log_to_file_enabled():
         log_to_file(data)
 
     t.sent_content = json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace')

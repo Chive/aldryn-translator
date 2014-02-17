@@ -65,5 +65,9 @@ def is_dev():
     return getattr(settings, "ALDRYN_TRANSLATOR_DEV", False)
 
 
+def log_to_file_enabled():
+    return getattr(settings, "ALDRYN_TRANSLATOR_LOG_TO_FILE", False)
+
+
 def get_blacklist():
     return getattr(settings, "ALDRYN_TRANSLATOR_FIELDS_BLACKLIST", list())

@@ -13,7 +13,7 @@ from cms.models import Title, Page, CMSPlugin
 from cms.api import copy_plugins_to_language
 from cms.utils.copy_plugins import copy_plugins_to
 
-from utils import get_creds, is_dev, log_to_file
+from utils import get_creds, is_dev, log_to_file, log_to_file_enabled
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
@@ -82,7 +82,7 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
 
                     plugin_data.append(plugin_dict)
 
-    if is_dev():
+    if log_to_file_enabled():
         log_to_file(plugin_data)
 
     return plugin_data
