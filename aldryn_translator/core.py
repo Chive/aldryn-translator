@@ -13,7 +13,7 @@ from cms.models import Title, Page, CMSPlugin
 from cms.api import copy_plugins_to_language
 from cms.utils.copy_plugins import copy_plugins_to
 
-from utils import get_creds, is_dev, log_to_file, log_to_file_enabled
+from utils import get_creds, is_dev, log_to_file, log_to_file_enabled, verify_ssl
 
 
 def export_plugins_by_pages(from_lang, plugin_selection=None):
@@ -209,7 +209,7 @@ def get_quote(provider, data):
             url = 'http://supertext.ch/api/v1/translation/quote'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
-                          headers=headers)
+                          headers=headers, verify=verify_ssl())
         return r.content
 
     else:
@@ -225,7 +225,7 @@ def get_order(provider, data):
             url = 'http://supertext.ch/api/v1/translation/order'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
-                          headers=headers, auth=(user, api_key))
+                          headers=headers, auth=(user, api_key), verify=verify_ssl())
         return r.content
 
     else:

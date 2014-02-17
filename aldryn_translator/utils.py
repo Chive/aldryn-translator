@@ -71,3 +71,9 @@ def log_to_file_enabled():
 
 def get_blacklist():
     return getattr(settings, "ALDRYN_TRANSLATOR_FIELDS_BLACKLIST", list())
+
+
+def verify_ssl():
+    if is_dev():
+        return False
+    return True
