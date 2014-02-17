@@ -7,11 +7,10 @@ from django.core.urlresolvers import reverse
 from djangocms_text_ckeditor.models import Text
 import requests
 
-from cms.models import Placeholder
+from cms.models import Placeholder, StaticPlaceholder
 from cms.utils.i18n import get_language_list
 from cms.models import Title, Page, CMSPlugin
 from cms.api import copy_plugins_to_language
-from cms.stacks.models import Stack
 from cms.utils.copy_plugins import copy_plugins_to
 
 from utils import get_creds, is_dev, log_to_file
@@ -27,19 +26,14 @@ def export_plugins_by_pages(from_lang, plugin_selection=None):
     return export_plugins(from_lang, plugins, plugin_selection)
 
 
-def export_plugins_by_stacks(from_lang, plugin_selection=None):
+def export_plugins_by_static_placeholder(from_lang, plugin_selection=None):
     plugins = []
-    for stack in Stack.objects.all():
-        try:
-            field = 'draft'
-            getattr(stack, field)
-        except AttributeError:
-            # Supporting old stacks here
-            field = 'content'
+    for static_placeholder in StaticPlaceholder.objects.all():
+        field = 'draft'
+        getattr(static_placeholder, field)
 
-        finally:
-            for plugin in getattr(stack, field).get_plugins():
-                plugins.append(plugin)
+        for plugin in getattr(static_placeholder, field).get_plugins():
+            plugins.append(plugin)
 
     return export_plugins(from_lang, plugins, plugin_selection)
 
@@ -132,8 +126,8 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
     if obj.all_pages:
         raw_data += export_plugins_by_pages(source, obj.order_selection)
 
-    if obj.all_stacks:
-        raw_data += export_plugins_by_stacks(source, obj.order_selection)
+    if obj.all_static_placeholders:
+        raw_data += export_plugins_by_static_placeholder(source, obj.order_selection)
 
     raw_data += export_page_titles(source, obj.order_selection)
 
@@ -265,14 +259,14 @@ def copy_page(from_lang, to_lang):
             # copy plugins using API
             copy_plugins_to_language(page, from_lang, to_lang)
 
-    for stack in Stack.objects.all():
+    for static_placeholder in StaticPlaceholder.objects.all():
         plugin_list = []
-        for plugin in stack.draft.get_plugins():
+        for plugin in static_placeholder.draft.get_plugins():
             if plugin.language == from_lang:
                 plugin_list.append(plugin)
 
         if plugin_list:
-            copy_plugins_to(plugin_list, stack.draft, to_lang)
+            copy_plugins_to(plugin_list, static_placeholder.draft, to_lang)
 
 
 def insert_response(provider, response):

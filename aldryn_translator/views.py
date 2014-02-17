@@ -36,7 +36,7 @@ class AddTranslationView(FormView):
         f.provider = form.cleaned_data['provider']
         f.copy_content = form.cleaned_data['copy_content']
         f.all_pages = form.cleaned_data['all_pages']
-        f.all_stacks = form.cleaned_data['all_stacks']
+        f.all_stacks = form.cleaned_data['all_static_placeholders']
         f.save()
 
         self.trans_pk = f.pk

@@ -2,9 +2,11 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from annoying.fields import JSONField
-
 from cms.models import Page
-from cms.stacks.models import Stack
+
+# Fix south migrations
+from south.modelsinspector import add_introspection_rules
+add_introspection_rules([], ["^annoying.fields.JSONField"])
 
 
 STATUS_CHOICES = (
@@ -41,7 +43,7 @@ class TranslationRequest(models.Model):
     price = models.DecimalField(verbose_name=_("Preis"), decimal_places=2, max_digits=20, null=True, blank=True)
     translated_at = models.DateTimeField(verbose_name=_("Translated at"), null=True, blank=True)
     all_pages = models.BooleanField(verbose_name=_("Send all pages"))
-    all_stacks = models.BooleanField(verbose_name=_("Send all stacks"))
+    all_static_placeholders = models.BooleanField(verbose_name=_("Send all static placeholders"))
     sent_content = JSONField(verbose_name=_("Sent content"), null=True, blank=True)
     provider = models.CharField(verbose_name=_("Provider"), choices=PROVIDER_CHOICES, max_length=100,
                                 default=PROVIDER_CHOICES[0][0])
