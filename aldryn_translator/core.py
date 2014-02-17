@@ -204,9 +204,9 @@ def prepare_order_data(request, obj):
 def get_quote(provider, data):
     if provider == 'supertext':
         if is_dev():
-            url = 'http://dev.supertext.ch/api/v1/translation/quote'
+            url = 'https://dev.supertext.ch/api/v1/translation/quote'
         else:
-            url = 'http://supertext.ch/api/v1/translation/quote'
+            url = 'https://supertext.ch/api/v1/translation/quote'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
                           headers=headers, verify=verify_ssl())
@@ -220,9 +220,9 @@ def get_order(provider, data):
     if provider == 'supertext':
         user, api_key = get_creds('SUPERTEXT', ['USER', 'API_KEY'])
         if is_dev():
-            url = 'http://dev.supertext.ch/api/v1/translation/order'
+            url = 'https://dev.supertext.ch/api/v1/translation/order'
         else:
-            url = 'http://supertext.ch/api/v1/translation/order'
+            url = 'https://supertext.ch/api/v1/translation/order'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
                           headers=headers, auth=(user, api_key), verify=verify_ssl())
