@@ -16,9 +16,11 @@ from cms.utils.copy_plugins import copy_plugins_to
 from utils import get_creds, is_dev, log_to_file, log_to_file_enabled, verify_ssl
 
 
-def export_plugins_by_pages(from_lang, plugin_selection=None):
+def export_plugins_by_pages(from_lang, pages, plugin_selection=None):
     plugins = []
-    for page in Page.objects.filter(publisher_is_draft=True):
+    # for page in Page.objects.filter(publisher_is_draft=True):
+    for page in pages.all():
+        print page
         for ph in page.placeholders.all():
             for plugin in ph.get_plugins():
                 plugins.append(plugin)
@@ -88,12 +90,12 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
     return plugin_data
 
 
-def export_page_titles(lang, plugin_selection=None):
+def export_page_titles(lang, pages, plugin_selection=None):
     title_data = []
     if plugin_selection and '_pagetitle' not in plugin_selection:
         return title_data
 
-    for page in Page.objects.all():
+    for page in pages.all():
         try:
             title = page.title_set.filter(language=lang, page__publisher_is_draft=True)[0]
             title_data.append({
@@ -123,13 +125,13 @@ def prepare_data(obj, from_lang, to_lang, plugin_source_lang=None):
 
     raw_data = []
 
-    if obj.all_pages:
-        raw_data += export_plugins_by_pages(source, obj.order_selection)
+    if obj.pages:
+        raw_data += export_plugins_by_pages(source, obj.pages, obj.order_selection)
 
     if obj.all_static_placeholders:
         raw_data += export_plugins_by_static_placeholder(source, obj.order_selection)
 
-    raw_data += export_page_titles(source, obj.order_selection)
+    raw_data += export_page_titles(source, obj.pages, obj.order_selection)
 
     if not raw_data:
         raise UserWarning("No content could be found.")
@@ -233,7 +235,7 @@ def get_order(provider, data):
 
 
 # copied from cms > management
-def copy_page(from_lang, to_lang):
+def copy_pages(from_lang, to_lang, pages):
     site = settings.SITE_ID
 
     #test both langs
@@ -246,7 +248,7 @@ def copy_page(from_lang, to_lang):
     except AssertionError:
         raise Exception("Could not languages from site")
 
-    for page in Page.objects.on_site(site).drafts():
+    for page in pages.all():
         # copy title
         if from_lang in page.get_languages():
             try:

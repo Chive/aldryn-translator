@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import FormView
 
-from core import get_quote, get_order, copy_page, insert_response, prepare_data, prepare_order_data
+from core import get_quote, get_order, copy_pages, insert_response, prepare_data, prepare_order_data
 from models import TranslationRequest, TranslationResponse
 from forms import AddTranslationForm, SelectPluginsByTypeForm
 from utils import check_stage, is_dev, log_to_file, log_to_file_enabled
@@ -35,8 +35,9 @@ class AddTranslationView(FormView):
         f.to_lang = form.cleaned_data['to_lang']
         f.provider = form.cleaned_data['provider']
         f.copy_content = form.cleaned_data['copy_content']
-        f.all_pages = form.cleaned_data['all_pages']
         f.all_stacks = form.cleaned_data['all_static_placeholders']
+        f.save()
+        f.pages = form.cleaned_data['pages']
         f.save()
 
         self.trans_pk = f.pk
@@ -125,7 +126,7 @@ def order_view(request, pk):
 
     # COPY OLD LANG PAGE TREE TO NEW ONE
     if t.copy_content:
-        copy_page(t.from_lang, t.to_lang)
+        copy_pages(t.from_lang, t.to_lang, t.pages)
 
     data = prepare_data(t, t.from_lang, t.to_lang, plugin_source_lang=t.to_lang)
     data.update(prepare_order_data(request, t))

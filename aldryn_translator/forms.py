@@ -3,6 +3,8 @@ from django import forms
 from django.forms import Select
 from django.utils.translation import ugettext_lazy as _
 
+from cms.models import Page
+
 from utils import get_site_languages
 from models import TranslationRequest
 
@@ -12,7 +14,7 @@ class AddTranslationForm(forms.ModelForm):
         model = TranslationRequest
         fields = [
             # 'from_lang', 'to_lang', added dynamically in __init__()
-            'provider', 'copy_content', 'all_pages', 'all_static_placeholders',
+            'provider', 'copy_content', 'pages', 'all_static_placeholders',
         ]
 
         widgets = {
@@ -24,6 +26,12 @@ class AddTranslationForm(forms.ModelForm):
         super(AddTranslationForm, self).__init__(*args, **kwargs)
         self.fields['from_lang'] = forms.ChoiceField(choices=self.build_lang_choices())
         self.fields['to_lang'] = forms.ChoiceField(choices=self.build_lang_choices())
+        # Displays page choices with levels
+        page_choices = []
+        for page in self.fields['pages'].choices:
+            page_choices.append((page[0], '%s %s' % ('+' * Page.objects.get(pk=page[0]).level, page[1])))
+
+        self.fields['pages'].choices = page_choices
 
     def build_lang_choices(self):
         choices = list()

@@ -18,16 +18,6 @@ STATUS_CHOICES = (
     ('fail', _('Failed'))
 )
 
-# class PageTranslation(models.Model):
-#     created_at = models.DateTimeField(verbose_name=_("Created at"), auto_now_add=True)
-#     page = models.ForeignKey(Page)
-#     from_lang = models.CharField(verbose_name=_("From Language"), max_length=10)
-#     to_lang = models.CharField(verbose_name=_("From Language"), max_length=10)
-#     status = models.CharField(verbose_name=_("Status"), max_length=20, choices=STATUS_CHOICES,
-#                               default=STATUS_CHOICES[0])
-#     price = models.DecimalField(verbose_name=_("Preis"), decimal_places=2, max_digits=20)
-#     translated_at = models.DateTimeField(verbose_name=_("Translated at"))
-
 
 class TranslationRequest(models.Model):
     PROVIDER_CHOICES = (
@@ -42,7 +32,7 @@ class TranslationRequest(models.Model):
                               default=STATUS_CHOICES[0][0])
     price = models.DecimalField(verbose_name=_("Preis"), decimal_places=2, max_digits=20, null=True, blank=True)
     translated_at = models.DateTimeField(verbose_name=_("Translated at"), null=True, blank=True)
-    all_pages = models.BooleanField(verbose_name=_("Send all pages"))
+    pages = models.ManyToManyField(Page, limit_choices_to={'publisher_is_draft': True})
     all_static_placeholders = models.BooleanField(verbose_name=_("Send all static placeholders"))
     sent_content = JSONField(verbose_name=_("Sent content"), null=True, blank=True)
     provider = models.CharField(verbose_name=_("Provider"), choices=PROVIDER_CHOICES, max_length=100,
