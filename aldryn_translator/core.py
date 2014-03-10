@@ -256,6 +256,8 @@ def copy_pages(from_lang, to_lang, pages):
             except Title.DoesNotExist:
                 title = page.get_title_obj(from_lang)
                 title.id = None
+                title.publisher_public_id = None
+                title.publisher_state = 0
                 title.language = to_lang
                 title.save()
             # copy plugins using API
