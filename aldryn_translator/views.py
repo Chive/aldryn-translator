@@ -110,7 +110,7 @@ def get_quote_view(request, pk):
         if t.provider == 'supertext':
             res = json.loads(quote)
             return render_to_response(
-                'aldryn_translator/quote.html', {'res': res},
+                'aldryn_translator/quote.html', {'res': res, 'dev': is_dev()},
                 context_instance=RequestContext(request))
 
         else:
