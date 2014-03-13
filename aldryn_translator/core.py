@@ -13,7 +13,7 @@ from cms.models import Title, Page, CMSPlugin
 from cms.api import copy_plugins_to_language
 from cms.utils.copy_plugins import copy_plugins_to
 
-from utils import get_creds, is_dev, log_to_file, log_to_file_enabled, verify_ssl
+from utils import get_blacklist, get_creds, is_dev, log_to_file, log_to_file_enabled, verify_ssl
 
 
 def export_plugins_by_pages(from_lang, pages, plugin_selection=None):
@@ -51,6 +51,7 @@ def export_plugins_by_placeholders(from_lang):
 
 
 def export_plugins(from_lang, plugin_list, plugin_selection=None):
+    field_blacklist = get_blacklist()
     plugin_data = []
     for plugin in plugin_list:
         try:
@@ -80,7 +81,8 @@ def export_plugins(from_lang, plugin_list, plugin_selection=None):
                     }
 
                     for key, value in item.items():
-                        plugin_dict['fields'][key] = value
+                        if not key in field_blacklist:
+                            plugin_dict['fields'][key] = value
 
                     plugin_data.append(plugin_dict)
 
