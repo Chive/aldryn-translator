@@ -208,7 +208,7 @@ def get_quote(provider, data):
         if is_dev():
             url = 'https://dev.supertext.ch/api/v1/translation/quote'
         else:
-            url = 'https://supertext.ch/api/v1/translation/quote'
+            url = 'https://www.supertext.ch/api/v1/translation/quote'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
                           headers=headers, verify=verify_ssl())
@@ -224,7 +224,7 @@ def get_order(provider, data):
         if is_dev():
             url = 'https://dev.supertext.ch/api/v1/translation/order'
         else:
-            url = 'https://supertext.ch/api/v1/translation/order'
+            url = 'https://www.supertext.ch/api/v1/translation/order'
         headers = {'Content-type': 'application/json; charset=UTF-8', 'Accept': '*'}
         r = requests.post(url, data=json.dumps(data, ensure_ascii=False).encode('ascii', 'xmlcharrefreplace'),
                           headers=headers, auth=(user, api_key), verify=verify_ssl())
