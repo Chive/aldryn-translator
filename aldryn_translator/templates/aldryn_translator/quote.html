@@ -2,8 +2,9 @@
 {% load i18n cms_tags %}
 
 {% block content %}
-	<h1>Your Quote</h1>
-	<form action="" method="post">
+	<h1>Your Quote <strong style="color:red">({% if dev %}Testing Mode{% else %}LIVE MODE{% endif %})</strong></h1>
+
+	<form action="" method="post" {% if not dev %} onsubmit="return confirm('Do you really want to submit the request? This will cost you money!!');"{% endif %}>
 	    {% csrf_token %}
 		{% for opt in res.Options %}
 			<h2>{{ opt.Name }}</h2>
