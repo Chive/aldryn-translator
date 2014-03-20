@@ -288,7 +288,10 @@ def insert_response(provider, response):
             else:
                 # Plugin objects
                 instance = CMSPlugin.objects.get(pk=obj['GroupId']).get_plugin_instance()[0]
-                instance.set_translatable_content(obj['Items'])
+                content = {}
+                for item in obj['Items']:
+                    content[item['Id']] = item['Content']
+                instance.set_translatable_content(content)
                 instance.save()
     else:
         raise NotImplementedError()
